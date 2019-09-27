@@ -7,6 +7,28 @@
 #include <stdlib.h>
 
 enum {
+	DIRECTION_NORTH,
+	DIRECTION_WEST,
+	DIRECTION_SOUTH,
+	DIRECTION_EAST,
+	DIRECTION_MAX
+};
+typedef struct {
+	int x, y;
+	int count;
+
+}BOMB;
+#define BOMB_MAX 10
+#define BOMB_COUNT_MAX 10
+BOMB bombs[BOMB_MAX];
+
+int directions[][2] = {
+	{0,-1},//DIRECTION_NORTH,
+	{-1,0},//DIRECTION_WEST,
+	{0,1},//DIRECTION_SOUTH,
+	{1,0}//DIRECTION_EAST,
+};
+enum {
 	CELL_TYPE_NONE,
 	CELL_TYPE_HARD_BLOCK,
 	CELL_TYPE_SOFT_BLOCK,
@@ -21,7 +43,7 @@ char cellAA[][2 + 1] = {
 };
 typedef struct {
 	int x, y;
-
+	int direction;
 }MONSTER;
 #define MONSTER_MAX 9
 MONSTER monsters[MONSTER_MAX];
@@ -52,6 +74,33 @@ void setFreePosition(int* pX, int* pY) {
 		}
 	}
 
+}
+bool checkCanMove(int _x,int _y) {
+	switch (cells[_y][_x]) {
+	case CELL_TYPE_HARD_BLOCK:
+	case CELL_TYPE_SOFT_BLOCK:
+		return false;
+	default:
+		if (getMonster(_x, _y) < 0)
+			return true;
+		return false;
+		break;
+	}
+
+}
+int getFreeBomb() {
+	for (int i = 0; i < BOMB_MAX; i++) {
+		if (bombs[i].count <= 0)
+			return i;
+		return -1;
+	}
+}
+int getBomb(int _x,int _y) {
+	for (int i = 0; i < BOMB_MAX; i++) 
+		if ((bombs[i].x == _x) && (bombs[i].y == _y))
+			return i;
+		return -1;
+	
 }
 int main() {
 	srand(time(NULL));
@@ -84,15 +133,22 @@ int main() {
 		}
 		if (left > MAP_WIDTH - SCREEN_WIDTH)
 			left = MAP_WIDTH - SCREEN_WIDTH;
+
 		for (int y = 0; y < MAP_HEIGHT; y++) {
 			for (int x = left; x < left + SCREEN_WIDTH; x++) {
 				int monster = getMonster(x, y);
-				if (monster < 0)
-					printf(cellAA[cells[y][x]]);
-				else if (monster > 0)
+				int bomb = getBomb(x, y);
+				if (monster > 0)
 					printf("敵");
-				else
+				else if (monster == 0)
 					printf("＠");
+				else if (bomb >= 0) {
+					char aa[] = "０";
+						aa[1] + bombs[bomb].count;
+						printf(aa);
+				}
+				else
+					printf(cellAA[cells[y][x]]);
 			}
 			printf("\n");
 		}
@@ -103,16 +159,26 @@ int main() {
 		case 's':y++; break;
 		case 'a':x--; break;
 		case 'd':x++; break;
+		case ' ':
+			int bomb = getFreeBomb();
+			if (bomb >= 0) {
+				bombs[bomb].x = monsters[0].x;
+				bombs[bomb].y = monsters[0].y;
+			}break;
 		}
-		switch (cells[y][x]) {
-		case CELL_TYPE_HARD_BLOCK:
-		case CELL_TYPE_SOFT_BLOCK:
-			break;
-		default:
+		if (checkCanMove(x, y)) {
 			monsters[0].x = x;
 			monsters[0].y = y;
-			break;
 		}
-		
+		for (int i = 1; i < MONSTER_MAX; i++) {
+			int x = monsters[i].x + directions[monsters[i].direction][0];
+			int y = monsters[i].y + directions[monsters[i].direction][1];
+			if (checkCanMove(x, y)) {
+				monsters[i].x = x;
+				monsters[i].y = y;
+			}
+			else
+				monsters[i].direction = rand() % DIRECTION_MAX;
+		}
 	}
 }
