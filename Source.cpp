@@ -21,7 +21,7 @@ typedef struct {
 #define BOMB_MAX 10
 #define BOMB_COUNT_MAX 10
 BOMB bombs[BOMB_MAX];
-
+int exitX, exitY;//出口
 int directions[][2] = {
 	{0,-1},//DIRECTION_NORTH,
 	{-1,0},//DIRECTION_WEST,
@@ -99,6 +99,19 @@ bool checkCanMove(int _x,int _y) {
 	}
 
 }
+void setRandomSoftPos(int *pX,int *pY) {
+	while (1) {
+		int x = rand() % MAP_WIDTH;
+		int y = rand() % MAP_HEIGHT;
+		if (cells[y][x] == CELL_TYPE_SOFT_BLOCK) {
+			*pX = x;
+			*pY = y;
+			printf("x:%d y:%d", x, y);
+			_getch();
+			return;
+		}
+	}
+}
 int getFreeBomb() {
 	for (int i = 0; i < BOMB_MAX; i++) {
 		if (bombs[i].count <= 0)
@@ -125,6 +138,11 @@ void explosion(int _x,int _y) {
 				if (monster > 1) {
 					monsters[monster].isDead = true;
 				}
+				int bomb = getBomb(x, y);
+				if (bomb >= 0) {
+					bombs[bomb].count = 0;
+					explosion(x, y);
+				}
 				cells[y][x] = CELL_TYPE_EXPLOSION;//爆発
 			}
 		}
@@ -139,7 +157,7 @@ int main() {
 	for (int y = 0; y < MAP_HEIGHT; y++)
 		for (int x = 0; x < MAP_WIDTH; x += MAP_WIDTH - 1)
 			cells[y][x] = CELL_TYPE_HARD_BLOCK;
-	for (int y = 0; y < MAP_HEIGHT; y++)
+	for (int y = 1; y < MAP_HEIGHT-1; y++)
 		for (int x = 1; x < MAP_WIDTH - 1; x++) {
 			if ((x % 2 == 0) && (y % 2 == 0))
 				cells[y][x] = CELL_TYPE_HARD_BLOCK;
@@ -147,6 +165,7 @@ int main() {
 				cells[y][x] = CELL_TYPE_SOFT_BLOCK;//ソフトブロック
 		}
 	cells[1][1] = cells[2][1] = cells[1][2] = CELL_TYPE_NONE;
+	setRandomSoftPos(&exitX, &exitY);
 	monsters[0].x = 1;
 	monsters[0].y = 1;
 
