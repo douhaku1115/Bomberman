@@ -33,6 +33,7 @@ enum {
 	CELL_TYPE_HARD_BLOCK,
 	CELL_TYPE_SOFT_BLOCK,
 	CELL_TYPE_EXPLOSION,
+	CELL_TYPE__EXIT,
 	CELL_TYPE_MAX
 };
 
@@ -41,7 +42,8 @@ char cellAA[][2 + 1] = {
 	"　",//CELL_TYPE_NONE,
 	"■",//CELL_TYPE_HARD_BLOCK,
 	"□",//CELL_TYPE_SOFT_BLOCK,
-	"※"//CELL_TYPE_EXPLOSION,
+	"※",//CELL_TYPE_EXPLOSION,
+	"扉"//CELL_TYPE__EXIT,
 };
 typedef struct {
 	int x, y;
@@ -106,7 +108,7 @@ void setRandomSoftPos(int *pX,int *pY) {
 		if (cells[y][x] == CELL_TYPE_SOFT_BLOCK) {
 			*pX = x;
 			*pY = y;
-			printf("x:%d y:%d", x, y);
+			printf("%d -%d", x, y);
 			_getch();
 			return;
 		}
@@ -204,7 +206,9 @@ int main() {
 		for (int y = 1; y < MAP_HEIGHT - 1; y++)
 			for (int x = 1; x < MAP_WIDTH - 1; x++) {
 				if (cells[y][x] == CELL_TYPE_EXPLOSION)
-					cells[y][x] = CELL_TYPE_NONE;
+					cells[y][x]= ((x == exitX) && (y == exitY))
+					?CELL_TYPE__EXIT
+					: CELL_TYPE_NONE;
 			}
 		int x = monsters[0].x;
 		int y = monsters[0].y;
