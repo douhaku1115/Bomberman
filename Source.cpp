@@ -244,6 +244,19 @@ int main() {
 		if (checkCanMove(x, y)) {
 			monsters[0].x = x;
 			monsters[0].y = y;
+
+			if (cells[y][x] == CELL_TYPE__EXIT) {
+				int enemyCount = 0;
+				for (int i = 1; i < MONSTER_MAX; i++)
+					if (!monsters[i].isDead) {
+						enemyCount++;
+						break;
+					}
+				if (enemyCount <= 0)
+					printf("CLEAR!!\a");
+				_getch();
+				exit(0);
+			}
 		}
 		for (int i = 0; i < BOMB_MAX; i++) {
 			if (bombs[i].count <= 0)
