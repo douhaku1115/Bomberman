@@ -108,8 +108,6 @@ void setRandomSoftPos(int *pX,int *pY) {
 		if (cells[y][x] == CELL_TYPE_SOFT_BLOCK) {
 			*pX = x;
 			*pY = y;
-			printf("%d -%d", x, y);
-			_getch();
 			return;
 		}
 	}
@@ -121,6 +119,44 @@ int getFreeBomb() {
 		return -1;
 	}
 }
+void display() {
+	system("cls");
+	//int left = 0;
+	int left = monsters[0].x - (SCREEN_WIDTH / 2);
+	if (left < 0) {
+		left = 0;
+	}
+	if (left > MAP_WIDTH - SCREEN_WIDTH)
+		left = MAP_WIDTH - SCREEN_WIDTH;
+
+	for (int y = 0; y < MAP_HEIGHT; y++) {
+		for (int x = left; x < left + SCREEN_WIDTH; x++) {
+			int monster = getMonster(x, y);
+			int bomb = getBomb(x, y);
+			if (monster > 0)
+				printf("敵");
+			else if (monster == 0)
+				printf("＠");
+			else if (bomb >= 0) {
+				char aa[] = "０";
+
+				aa[1] += bombs[bomb].count;
+				printf(aa);
+			}
+			else
+				printf(cellAA[cells[y][x]]);
+		}
+		printf("\n");
+	}
+}
+void gameOver() {
+	monsters[0].isDead = true;
+	display();
+	printf("GAME OVER\a");
+	_getch();
+	exit(0);
+}
+
 void explosion(int _x,int _y) {
 	cells[_y][_x] = CELL_TYPE_EXPLOSION; //爆発
 	for (int j = 0; j < DIRECTION_MAX; j++) {//全方向
@@ -140,6 +176,8 @@ void explosion(int _x,int _y) {
 				if (monster > 1) {
 					monsters[monster].isDead = true;
 				}
+				else if (monster == 0)
+					gameOver();    //ゲームオーバー
 				int bomb = getBomb(x, y);
 				if (bomb >= 0) {
 					bombs[bomb].count = 0;
@@ -150,6 +188,7 @@ void explosion(int _x,int _y) {
 		}
 	}
 }
+
 
 int main() {
 	srand(time(NULL));
@@ -175,34 +214,8 @@ int main() {
 		setFreePosition(&monsters[i].x, &monsters[i].y);
 
 	while (1) {
-		system("cls");
-		//int left = 0;
-		int left = monsters[0].x - (SCREEN_WIDTH / 2);
-		if (left < 0) {
-			left = 0;
-		}
-		if (left > MAP_WIDTH - SCREEN_WIDTH)
-			left = MAP_WIDTH - SCREEN_WIDTH;
-
-		for (int y = 0; y < MAP_HEIGHT; y++) {
-			for (int x = left; x < left + SCREEN_WIDTH; x++) {
-				int monster = getMonster(x, y);
-				int bomb = getBomb(x, y);
-				if (monster > 0)
-					printf("敵");
-				else if (monster == 0)
-					printf("＠");
-				else if (bomb >= 0) {
-					char aa[] = "０";
-
-					aa[1] += bombs[bomb].count;
-					printf(aa);
-				}
-				else
-					printf(cellAA[cells[y][x]]);
-			}
-			printf("\n");
-		}
+		display();
+		
 		for (int y = 1; y < MAP_HEIGHT - 1; y++)
 			for (int x = 1; x < MAP_WIDTH - 1; x++) {
 				if (cells[y][x] == CELL_TYPE_EXPLOSION)
@@ -225,6 +238,9 @@ int main() {
 				bombs[bomb].count = BOMB_COUNT_MAX;
 			}break;
 		}
+		if (getMonster(x, y) > 0) {
+			gameOver();
+		}
 		if (checkCanMove(x, y)) {
 			monsters[0].x = x;
 			monsters[0].y = y;
@@ -243,6 +259,11 @@ int main() {
 					continue;
 				int x = monsters[i].x + directions[monsters[i].direction][0];
 				int y = monsters[i].y + directions[monsters[i].direction][1];
+				if (getMonster(x, y) == 0) {
+					monsters[i].x = x;
+					monsters[i].y = y;
+					gameOver();
+				}
 				if (checkCanMove(x, y)) {
 					monsters[i].x = x;
 					monsters[i].y = y;
